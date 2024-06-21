@@ -22,8 +22,6 @@ import pymupdf
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# my modules
-   
 
 def get_download_path():
     """Returns the default downloads path for linux or windows"""
@@ -38,7 +36,7 @@ def get_download_path():
         return os.path.join(os.path.expanduser('~'), 'downloads')
 
 def get_scan_path():        
-    return 'C:\Сканы'
+    return '.\IN'
 
 
 class MyWindow(QMainWindow, FileSystemEventHandler):
@@ -80,24 +78,9 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
 
         self.observer.start()
         
-        
-        # self.ui.acFileOpen.triggered.connect(self.slot_file_open)
-        # self.ui.tbOpen.clicked.connect(self.slot_file_open)
-        # self.ui.acFileSaveAs.triggered.connect(self.slot_file_save_as)
-        # self.ui.acFileSave.triggered.connect(self.slot_file_save)
-        # self.ui.tbSave.clicked.connect(self.slot_file_save)
-        # self.ui.docScaleSpinBox.valueChanged.connect(self.zoom_page)
-        # self.ui.pbAddTemplate.clicked.connect(self.put_sign)
-        # self.ui.dial.valueChanged.connect(self.zoom_sign)
-        # self.ui.dial.value = 14
-        # self.ui.pageSpinBox.valueChanged.connect(self.display_page)
-        # self.ui.pageSpinBox.setMaximum(0)
-        # self.ui.pageSpinBox.setMinimum(0)
-        
-        # self.scene = QGraphicsScene()
-        # self.ui.graphicsView.setScene(self.scene)
 
     def adjust_size_pos(self):
+    """ place and resize main window accordig to display device resolution """
         r = QGuiApplication.primaryScreen().availableGeometry()
         r.adjust(0,0,-80,-40)
         r.moveCenter(QGuiApplication.primaryScreen().availableGeometry().center())
@@ -106,6 +89,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
 
         
     def hide_layout(self, layout):
+    """ hides all widgets of desired layout """
         for i in range(layout.count()):
             item = layout.itemAt(i)
             widget = item.widget()
@@ -115,6 +99,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
                 self.hide_layout(item)
 
     def show_layout(self, layout):
+    """ shows all widgets of desired layout """
         for i in range(layout.count()):
             item = layout.itemAt(i)
             widget = item.widget()
@@ -172,9 +157,11 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         self.ui.listWidgetR.addItems(files)
 
     def log(self, msgs):
+    """ just log msgs to a list widget """
         self.ui.logWidget.addItems([msgs])
     
     def process_file(self, fname):
+    """ main worker - page sorter """
         try:
             p = pathlib.Path(fname)
             self.log(f'Обрабатываем файл {p.resolve()}')
@@ -203,6 +190,8 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
             self.log(f'Ошибка {e.msg}')
             
     def on_any_event(self, event):
+    """ virtual method for FileSystemEventHandler funtionality
+        occures when any event on watched directory fires  """
         self.statusBar().showMessage( f'{event.event_type}, {event.src_path}' )
         
         p = pathlib.Path(event.src_path)
@@ -222,49 +211,10 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         #self.statusBar().showMessage(event.src_path)
 
     
-    def slot_file_open(self, arg1):
-        #print(f"File Open...{arg1}")
-#        self.fileName = QFileDialog.getOpenFileName(self,
-#            "Окрыть файл", get_download_path(), "Документы (*.pdf)")
-        self.fileName = QFileDialog.getOpenFileName(self,
-            "Окрыть файл", get_scan_path(), "Документы (*.pdf)")
-        print(self.fileName)
-        if self.fileName != '':
-            try:
-                self.ui.docScaleSpinBox.setValue(100)
-                self.PDF = pymupdf.open(self.fileName[0])
-                self.display_page(0)
-                self.setWindowTitle(f'{self.fileName[0]}')
-                self.ui.pageSpinBox.setMinimum(0)
-                self.ui.pageSpinBox.setMaximum(self.PDF.page_count-1)
-                self.modified = False
-            except Exception as E:
-                print(f"Ошибка чтения файла {E}")
-            
-                
-    def slot_file_save_as(self, arg1):
-        #print(f"File Open...{arg1}")
-        self.fileName = QFileDialog.getSaveFileName(self,
-            "Сохранить как...", get_download_path(), "Документы (*.pdf)") [0]
-        print(f'выбран файл для записи => {self.fileName}')
-        if self.fileName != '':
-            self.modify_pdf()
-            self.PDF.save(self.fileName)
-
-    def slot_file_save(self, arg1):
-        #print(f"File Open...{arg1}")
-        if self.PDF.can_save_incrementally():
-            self.modify_pdf()
-            self.PDF.saveIncr()
-        else:
-            self.slot_file_save_as('')
-        
-
-QApplication.setOrganizationName("ООО Почта Сервис")
-QApplication.setOrganizationDomain("russianpost.ru")
+QApplication.setOrganizationName("CyberNet-Git")
+QApplication.setOrganizationDomain("sagdatmar.ru")
 QApplication.setApplicationName("PDFSorter")  
 
-#QtCore.QSettings("./myapp.ini", QtCore.QSettings.Format.IniFormat)
 app = QApplication(sys.argv)
 window = MyWindow()
 window.show()
