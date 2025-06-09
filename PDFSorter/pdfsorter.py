@@ -56,7 +56,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         
         self.srcDir = self.settings.value('srcdir')
         if self.srcDir == '' or self.srcDir is None:
-            self.srcDir = './'
+            self.srcDir = './IN/'
             self.settings.setValue('srcdir',self.srcDir)
         self.update_srcdir_view()
         self.ui.label_srcdir.setText(self.settings.value('srcdir'))
@@ -64,11 +64,12 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         
         self.dstDir = self.settings.value('dstdir')
         if self.dstDir == '' or self.dstDir is None:
-            self.dstDir = './'
+            self.dstDir = './OUT/'
             self.settings.setValue('dstdir',self.dstDir)
         self.update_dstdir_view()
         self.ui.label_dstdir.setText(self.settings.value('dstdir'))
 
+        # connect signals
         self.ui.tbSrcDir.clicked.connect(self.slot_srcdir_open)
         self.ui.tbDstDir.clicked.connect(self.slot_dstdir_open)
         self.ui.action_4.triggered.connect(self.display_help)
@@ -80,7 +81,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         
 
     def adjust_size_pos(self):
-    """ place and resize main window accordig to display device resolution """
+        """ place and resize main window accordig to display device resolution """
         r = QGuiApplication.primaryScreen().availableGeometry()
         r.adjust(0,0,-80,-40)
         r.moveCenter(QGuiApplication.primaryScreen().availableGeometry().center())
@@ -89,7 +90,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
 
         
     def hide_layout(self, layout):
-    """ hides all widgets of desired layout """
+        """ hides all widgets of desired layout """
         for i in range(layout.count()):
             item = layout.itemAt(i)
             widget = item.widget()
@@ -99,7 +100,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
                 self.hide_layout(item)
 
     def show_layout(self, layout):
-    """ shows all widgets of desired layout """
+        """ shows all widgets of desired layout """
         for i in range(layout.count()):
             item = layout.itemAt(i)
             widget = item.widget()
@@ -117,21 +118,16 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         self.show_layout(self.ui.workLayout)
 
     
-    def opendir(self):
-        try:
-            self.fd
-        except:
-            self.fd = QFileDialog(self)
-        finally:
-            self.fd.setFileMode(QFileDialog.FileMode.Directory)
-            if self.fd.exec():
-                dir = self.fd.selectedFiles()[0]
-            else:
-                dir = get_download_path()
-            return dir
+    def opendir(self, directory='./'):
+        d = QFileDialog.getExistingDirectory(self, "Выберите папку", directory=directory)
+        #print (f'Dir = {d}')
+        if d is not None and d != '':
+            return d
+        else:
+            return directory
     
     def slot_srcdir_open(self, arg1):
-        self.srcDir = self.opendir()
+        self.srcDir = self.opendir(self.srcDir)
         self.settings.setValue('srcdir',self.srcDir)
         self.update_srcdir_view()
         self.ui.label_srcdir.setText(self.settings.value('srcdir'))
@@ -139,7 +135,7 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         self.srcdir_obs = self.observer.schedule(self, path=self.srcDir, recursive=False) 
 
     def slot_dstdir_open(self, arg1):
-        self.dstDir = self.opendir()
+        self.dstDir = self.opendir(self.dstDir)
         self.settings.setValue('dstdir',self.dstDir)
         self.update_dstdir_view()
         self.ui.label_dstdir.setText(self.settings.value('dstdir'))
@@ -157,11 +153,11 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
         self.ui.listWidgetR.addItems(files)
 
     def log(self, msgs):
-    """ just log msgs to a list widget """
+        """ just log msgs to a list widget """
         self.ui.logWidget.addItems([msgs])
     
     def process_file(self, fname):
-    """ main worker - page sorter """
+        """ main worker - page sorter """
         try:
             p = pathlib.Path(fname)
             self.log(f'Обрабатываем файл {p.resolve()}')
@@ -187,10 +183,11 @@ class MyWindow(QMainWindow, FileSystemEventHandler):
                 
             doc.save(outfn.resolve())
         except Exception as e:
-            self.log(f'Ошибка {e.msg}')
+            self.log(f'Ошибка {e}')
+            
             
     def on_any_event(self, event):
-    """ virtual method for FileSystemEventHandler funtionality
+        """ virtual method for FileSystemEventHandler funtionality
         occures when any event on watched directory fires  """
         self.statusBar().showMessage( f'{event.event_type}, {event.src_path}' )
         
